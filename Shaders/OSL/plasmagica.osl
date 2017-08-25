@@ -1,0 +1,302 @@
+/*
+Blender Advent Calendar 2015
+http://www.adventar.org/calendars/833
+day 16
+http://c5h12.hatenablog.com/entry/2015/12/16/150540
+by Pentan
+Shader code is distributed under MIT license.
+Plasmagica and It's logo are part of SHOW BY ROCK!! (c)SANRIO.
+http://showbyrock.com/
+*/
+
+struct RGBA {
+    color rgb;
+    float a;
+};
+
+shader plasmagica(
+point coord = point(u, v, 0),
+color strokeColor = color(1.0, 0.0, 0.0),
+float strokeW = 0.02,
+color fillColor = color(1.0),
+output color outColor = color(1.0),
+output float outAlpha = 1.0
+)
+{
+    void makePreMulRGBA(color rgb, float a, RGBA ret) {
+        ret.rgb = rgb * a;
+        ret.a = a;
+    }
+    void mixPreMulRGBA(RGBA over, RGBA under, RGBA ret) {
+        ret.rgb = over.rgb + under.rgb * (1.0 - over.a);
+        ret.a = over.a + under.a * (1.0 - over.a);
+    }
+    
+    float distanceFromLine(point p0, point p1, point p) {
+        point v01 = p1 - p0;
+        point v0p = p - p0;
+        float l01 = length(v01);
+        v0p = v0p - (v01 / l01) * clamp(dot(v01, v0p) / l01, 0.0, l01);
+        return length(v0p);
+    }
+
+    // scan to +x direction
+    float scanLine(point p0, point p1, point p) {
+        float ty = (p[1] - p0[1]) / (p1[1] - p0[1]);
+        if(ty < 0.0 || ty >= 1.0) {
+            return 0.0;
+        }
+        float tx = mix(p0[0], p1[0], ty);
+        return (tx > p[0])? 1.0 : 0.0;
+    }
+    
+    float distanceFromCubicBezier(point p0, point cp0, point cp1, point p1, point p) {
+        point bp0 = p0 - p;
+        point bp1 = cp0 - p;
+        point bp2 = cp1 - p;
+        point bp3 = p1 - p;
+        
+        point va0 = -bp0 + 3.0 * (bp1 - bp2) + bp3;
+        point va1 = 3.0 * (bp0 - 2.0 * bp1 + bp2);
+        point va2 = 3.0 * (-bp0 + bp1);
+        point va3 = bp0;
+        
+        float a0 = 6.0 * (va0[0] * va0[0] + va0[1] * va0[1]);
+        float a1 = 10.0 * (va0[0] * va1[0] + va0[1] * va1[1]);
+        float a2 = 4.0 * ((2.0 * va0[0] * va2[0] + va1[0] * va1[0]) + (2.0 * va0[1] * va2[1] + va1[1] * va1[1]));
+        float a3 = 6.0 * ((va0[0] * va3[0] + va1[0] * va2[0]) + (va0[1] * va3[1] + va1[1] * va2[1]));
+        float a4 = 2.0 * ((2.0 * va1[0] * va3[0] + va2[0] * va2[0]) + (2.0 * va1[1] * va3[1] + va2[1] * va2[1]));
+        float a5 = 2.0 * (va2[0] * va3[0] + va2[1] * va3[1]);
+        
+        // blute force
+        int DIV = 6;
+        point pp = bp0;
+        float d = length(pp);
+        float u = 0.0;
+        
+        for(int i = 1; i <= DIV; i++) {
+            float t = float(i) / float(DIV);
+            point cp = ((va0 * t + va1) * t + va2) * t + va3;
+            float cd = length(cp);
+            if(cd < d) {
+                d = cd;
+                u = t;
+            }
+        }
+        
+        // newton
+        for(int i = 0; i < 32; i++) {
+            float gu = ((((a0 * u + a1) * u + a2) * u + a3) * u + a4) * u + a5;
+            float gdu = (((5.0 * a0 * u + 4.0 * a1) * u + 3.0 * a2) * u + 2.0 * a3) * u + a4;
+            float nu = u - gu / gdu;
+            float err = abs(nu - u);
+            u = nu;
+            if(err < 0.0001) {
+                break;
+            }
+        };
+        
+        // closest point
+        u = clamp(u, 0.0, 1.0);
+        point uv = ((va0 * u + va1) * u + va2) * u + va3;
+        float ud = length(uv);
+        if(ud < d) {
+            d = ud;
+        }
+        
+        return d;
+    }
+    
+    float scanCubicBezier(point p0, point cp0, point cp1, point p1, point p) {
+        point bp0 = p0 - p;
+        point bp1 = cp0 - p;
+        point bp2 = cp1 - p;
+        point bp3 = p1 - p;
+        
+        // no intersection 
+        if(bp0[1] > 0.0 && bp1[1] > 0.0 && bp2[1] > 0.0 && bp3[1] > 0.0) {
+            return 0.0;
+        }
+        
+        if(bp0[1] < 0.0 && bp1[1] < 0.0 && bp2[1] < 0.0 && bp3[1] < 0.0) {
+            return 0.0;
+        }
+        
+        if(bp0[0] < 0.0 && bp1[0] < 0.0 && bp2[0] < 0.0 && bp3[0] < 0.0) {
+            return 0.0;
+        }
+        
+        //
+        point va0 = -bp0 + 3.0 * (bp1 - bp2) + bp3;
+        point va1 = 3.0 * (bp0 - 2.0 * bp1 + bp2);
+        point va2 = 3.0 * (-bp0 + bp1);
+        point va3 = bp0;
+        
+        float a0 = 6.0 * (va0[0] * va0[0] + va0[1] * va0[1]);
+        float a1 = 10.0 * (va0[0] * va1[0] + va0[1] * va1[1]);
+        float a2 = 4.0 * ((2.0 * va0[0] * va2[0] + va1[0] * va1[0]) + (2.0 * va0[1] * va2[1] + va1[1] * va1[1]));
+        float a3 = 6.0 * ((va0[0] * va3[0] + va1[0] * va2[0]) + (va0[1] * va3[1] + va1[1] * va2[1]));
+        float a4 = 2.0 * ((2.0 * va1[0] * va3[0] + va2[0] * va2[0]) + (2.0 * va1[1] * va3[1] + va2[1] * va2[1]));
+        float a5 = 2.0 * (va2[0] * va3[0] + va2[1] * va3[1]);
+        
+        // blute force
+        int DIV = 64;
+        point pp = bp0;
+        float s = 0.0;
+        
+        for(int i = 1; i <= DIV; i++) { // <= DIV
+            float t = float(i) / float(DIV);
+            point cp = ((va0 * t + va1) * t + va2) * t + va3;
+            float cs = scanLine(pp, cp, point(0.0));
+            if(cs > 0.0) {
+                s += cs;
+            }
+            pp = cp;
+        }
+        
+        return s;
+    }
+    
+    // shapes
+    void starShape(point p, RGBA outrgba) {
+        point position = point(2.27121, 2.93069, 0.0);
+        float rotation = 0.253427532;
+        float majorR = 0.682539;
+        float minorR = 0.34352;
+        
+        float sn = sin(rotation);
+        float cs = cos(rotation);
+        point lp = coord - position;
+        lp = point(lp[0] * cs - lp[1] * sn, lp[0] * sn + lp[1] * cs, 0.0);
+
+        float PENTA_ANGLE = M_PI / 2.5;
+
+        float r = length(lp);
+        float a = atan2(lp[0], lp[1]);
+        a = mod(a, PENTA_ANGLE);
+        a = min(a, PENTA_ANGLE - a);
+        lp = point(sin(a), cos(a), 0.0) * r;
+        
+        point p0 = point(0.0, majorR, 0.0);
+        point p1 = point(cos(PENTA_ANGLE * 0.5), sin(PENTA_ANGLE * 0.5), 0.0) * minorR;
+        
+        vector tv01 = normalize(p1 - p0);
+        vector v01 = vector(-tv01[1], tv01[0], 0.0);
+        vector v0p = lp - p0;
+        float t = dot(v01, v0p);
+        
+        RGBA strkrgba;
+        RGBA fillrgba;
+        makePreMulRGBA(strokeColor, (abs(t) < strokeW)? 1.0 : 0.0, strkrgba);
+        makePreMulRGBA(fillColor, (t < 0.0)? 1.0 : 0.0, fillrgba);
+        mixPreMulRGBA(strkrgba, fillrgba, outrgba);
+    }
+    
+    void plasma1Shape(point p, RGBA outrgba) {
+        // lower part
+        point p0 = point(2.800398, 3.308511, 0.0);
+        point p1 = point(3.928315, 4.335365, 0.0);
+        point p2 = point(4.048409, 4.119161, 0.0);
+        
+        float d = distanceFromLine(p0, p1, p);
+        d = min(d, distanceFromLine(p1, p2, p));
+        d = min(d, distanceFromLine(p2, p0, p));
+        
+        float s = 0.0;
+        s += scanLine(p0, p1, p);
+        s += scanLine(p1, p2, p);
+        s += scanLine(p2, p0, p);
+        
+        RGBA strkrgba;
+        RGBA fillrgba;
+        makePreMulRGBA(strokeColor, (abs(d) < strokeW)? 1.0 : 0.0, strkrgba);
+        makePreMulRGBA(fillColor, (mod(s, 2.0) > 0.0)? 1.0 : 0.0, fillrgba);
+        mixPreMulRGBA(strkrgba, fillrgba, outrgba);
+    }
+    
+    void plasma2Shape(point p, RGBA outrgba) {
+        // upper part
+        point p0 = point(5.70311, 5.95113, 0.0);
+        point p1 = point(7.52196, 7.521223, 0.0);
+        point p2 = point(7.52949, 6.553924, 0.0);
+        point p3 = point(9.49229, 7.449265, 0.0);
+        point p4 = point(7.097784, 5.330662, 0.0);
+        point p5 = point(7.086442, 6.101661, 0.0);
+        point p6 = point(6.069538, 5.431992, 0.0);
+        
+        float d = distanceFromLine(p0, p1, p);
+        d = min(d, distanceFromLine(p1, p2, p));
+        d = min(d, distanceFromLine(p2, p3, p));
+        d = min(d, distanceFromLine(p3, p4, p));
+        d = min(d, distanceFromLine(p4, p5, p));
+        d = min(d, distanceFromLine(p5, p6, p));
+        d = min(d, distanceFromLine(p6, p0, p));
+        
+        float s = 0.0;
+        s += scanLine(p0, p1, p);
+        s += scanLine(p1, p2, p);
+        s += scanLine(p2, p3, p);
+        s += scanLine(p3, p4, p);
+        s += scanLine(p4, p5, p);
+        s += scanLine(p5, p6, p);
+        s += scanLine(p6, p0, p);
+        
+        RGBA strkrgba;
+        RGBA fillrgba;
+        makePreMulRGBA(strokeColor, (abs(d) < strokeW)? 1.0 : 0.0, strkrgba);
+        makePreMulRGBA(fillColor, (mod(s, 2.0) > 0.0)? 1.0 : 0.0, fillrgba);
+        mixPreMulRGBA(strkrgba, fillrgba, outrgba);
+    }
+    
+    void heartShape(point p, RGBA outrgba) {
+        point p00 = point(3.840327, 3.201623, 0.0);
+        point p01 = point(4.287171, 4.800179, 0.0);
+        point p02 = point(2.895957, 4.861297, 0.0);
+        point p10 = point(3.310679, 6.025796, 0.0);
+        point p11 = point(3.541543, 6.674042, 0.0);
+        point p12 = point(4.737912, 6.794761, 0.0);
+        point p20 = point(5.025951, 5.891862, 0.0);
+        point p21 = point(5.247099, 6.641434, 0.0);
+        point p22 = point(6.523427, 6.857496, 0.0);
+        point p30 = point(6.787172, 5.868671, 0.0);
+        point p31 = point(7.13217, 4.575211, 0.0);
+        point p32 = point(4.928161, 3.561558, 0.0);
+        
+        float d = distanceFromCubicBezier(p00, p01, p02, p10, p);
+        d = min(d, distanceFromCubicBezier(p10, p11, p12, p20, p));
+        d = min(d, distanceFromCubicBezier(p20, p21, p22, p30, p));
+        d = min(d, distanceFromCubicBezier(p30, p31, p32, p00, p));
+        
+        float s = 0.0;
+        s += scanCubicBezier(p00, p01, p02, p10, p);
+        s += scanCubicBezier(p10, p11, p12, p20, p);
+        s += scanCubicBezier(p20, p21, p22, p30, p);
+        s += scanCubicBezier(p30, p31, p32, p00, p);
+        
+        RGBA strkrgba;
+        RGBA fillrgba;
+        makePreMulRGBA(strokeColor, (abs(d) < strokeW)? 1.0 : 0.0, strkrgba);
+        makePreMulRGBA(fillColor, (mod(s, 2.0) > 0.0)? 1.0 : 0.0, fillrgba);
+        mixPreMulRGBA(strkrgba, fillrgba, outrgba);
+    }
+    
+    RGBA rgba, tmprgba;
+    
+    makePreMulRGBA(color(0.0, 0.0, 0.0), 0.0, rgba);
+    
+    starShape(coord, tmprgba);
+    mixPreMulRGBA(tmprgba, rgba, rgba);
+    
+    plasma1Shape(coord, tmprgba);
+    mixPreMulRGBA(tmprgba, rgba, rgba);
+    
+    heartShape(coord, tmprgba);
+    mixPreMulRGBA(tmprgba, rgba, rgba);
+    
+    plasma2Shape(coord, tmprgba);
+    mixPreMulRGBA(tmprgba, rgba, rgba);
+    
+    outColor = (rgba.a > 0.0)? (rgba.rgb / rgba.a) : color(0.0);
+    outAlpha = rgba.a;
+}
+
