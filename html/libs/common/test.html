@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Viewer Template Flex</title>
+<link rel="stylesheet" href="codeviewer.css">
+<script src="codeviewer.js"></script>
+<script>
+window.addEventListener('load',function () {
+    console.log("loaded");
+    var viewer = CodeViewer.inject(document.body, {
+        /* * /
+        canvasSize: {width:256, height:240},
+        / * */
+        /* */
+        numCodeTabs: 3,
+        numCodeViews: 2,
+        noTabBar: false
+        /* */
+    });
+    // viewer.descriptionView.innerHTML = CodeViewer.makeSimpleDescriptionHTML("Shader Title", "this is description.<br>width width width width width width width width width width width width width width width width <br>height<br>height<br>height<br>height<br>height<br>height<br>height<br>height<br>height<br>height<br>height<br>height<br>height<br>height<br>height<br>height<br>LAST");
+    viewer.codeViews[0].innerHTML = CodeViewer.makeSimpleCodeHTML('main(){\n    print("Hello");\n    return 0;\n}\n');
+    viewer.setEventListener({
+        tabChanged: function(vc, i, pre) {
+            console.log("selected:" + i + " unselected:" + pre);
+        },
+        play: function(vc) {
+            console.log("play");
+        },
+        pause: function(vc) {
+            console.log("pause");
+        },
+        reset: function(vc) {
+            console.log("reset");
+        },
+        /*
+        fullscreen: function(vc, cnvs) {
+            console.log("toggleFullscreen");
+        }
+        */
+        resize: function(vc, cnvs) {
+            console.log("canvas resized");
+        },
+    });
+    console.log(viewer);
+});
+</script>
+</head>
+<body></body>
+</html>

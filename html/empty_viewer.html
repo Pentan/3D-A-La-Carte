@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>empty viewer</title>
+<link rel="stylesheet" href="libs/common/codeviewer.css">
+<script src="libs/common/codeviewer.js"></script>
+<script>
+window.addEventListener('load',function () {
+    var cvcntx = CodeViewer.inject(document.body);
+    cvcntx.setTabTitleText(0, document.title? document.title:"Code");
+    var cntx = cvcntx.canvas.getContext('2d');
+});
+</script>
+</head>
+<body></body>
+</html>

@@ -1,0 +1,204 @@
+body {
+    background-color: #333;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.colleft {
+    /* background-color: red; */
+    /* margin-right: 2px; */
+    flex: 0 0 512px;
+    display: flex;
+    flex-direction: column;
+}
+
+.colright {
+    /* background-color: blue; */
+    margin-left: 1px;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* left column contents */
+.playerwrap {
+    /* background-color: #808080; */
+    display: flex;
+    flex-direction: column;
+    border: solid 2px #ccc;
+    /* border-radius: 8px; */
+    flex: 0 0 auto;
+}
+
+.playercanvas {
+    background-color: #808080;
+    /*
+    border: solid 2px #fff;
+    border-bottom: solid 1px #fff;
+    border-radius: 6px 6px 0px 0px;
+    width: 512px;
+    height: 288px;
+    */
+}
+
+.playercanvas:full-screen {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+}
+.playercanvas:fullscreen {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+}
+.playercanvas:-webkit-full-screen {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+}
+.playercanvas:-moz-full-screen {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+}
+.playercanvas:-ms-fullscreen {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+}
+
+.playerctrl {
+    background-color: #999;
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: row;
+    border-top: solid 1px #ccc;
+    /*
+    border: solid 2px #fff;
+    border-radius: 0px 0px 6px 6px;
+    */
+}
+
+.playerctrl_l {
+    /* background-color: #90c; */
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: row;
+}
+.playerctrl_r {
+    /* background-color: #09c; */
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.playerbtn {
+    background-color: #000;
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 4px;
+    margin: 4px;
+    padding: 0.5ex 1em;
+    font-style: sans-serif;
+    font-weight: bold;
+}
+
+.codedesc {
+    /* background-color: #c09; */
+    flex: 1 1 auto;
+    overflow: auto;
+    display: flex;
+}
+
+/* right column contents */
+.codeheader {
+    background-color: #333;
+    display: flex;
+    flex-direction: row;
+    border-bottom: solid 4px #ccc;
+    padding-left: 8px;
+    padding-top: 4px;
+}
+
+.codetab {
+    background-color: #999;
+    color: #000;
+    font-family: sans-serif;
+    font-weight: normal;
+    margin-right: 2px;
+    padding: 0.2ex 0.8em 0.2ex 0.8em;
+    border: 1px solid #000;
+    border-bottom: 0;
+    border-radius: 4px 4px 0 0;
+}
+
+.codetabsel {
+    background-color: #ccc;
+    color: #000;
+}
+
+.codewrap {
+    /* background-color: #9f9; */
+    flex: 1 0 auto;
+    position: relative;
+    border-left: 2px solid #ccc;
+}
+
+.codeview {
+    /* background-color: #369; */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+
+/* option contents */
+/* simple code block */
+.simplecodewrap {
+    background-color: #333;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    /* padding: 1ex 1em; */
+    overflow: scroll;
+}
+.simplecodeblock {
+    /* background-color: #333; */
+    color: #ccc;
+    margin: 1ex 1em;
+    font-family: monospace;
+}
+
+/* simple description block */
+.simpledescwrap {
+    background-color: #ccc;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow: scroll;
+    flex: 1 0 auto;
+}
+.simpledesctitle {
+    color: #000;
+    margin: 0.5ex 0.5em;
+    font-family: sans-serif;
+}
+.simpledesctext {
+    color: #000;
+    margin: 1ex 0.5em;
+    font-family: sans-serif;
+}
