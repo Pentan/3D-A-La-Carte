@@ -1,5 +1,5 @@
 #ifdef GL_ES
-presition mediump float;
+precision mediump float;
 #endif
 
 uniform vec2 resolution;
