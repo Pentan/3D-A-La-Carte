@@ -190,7 +190,7 @@ body {
     flex-direction: column;
     justify-content: flex-start;
     overflow: scroll;
-    flex: 1 0 auto;
+    flex: 1 1 auto;
 }
 .simpledesctitle {
     color: #000;
