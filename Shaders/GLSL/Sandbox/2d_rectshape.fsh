@@ -33,6 +33,16 @@ float distanceFromRoundRect(vec2 p, vec2 s, float r) {
     return r - (d0 + d1);
 }
 
+float distanceFromCapsule(vec2 p, vec2 s, float r) {
+    vec2 hs = s * 0.5;
+    vec2 ap = abs(p - hs);
+    vec2 cp = (hs.x < hs.y) ? vec2(0.0, hs.y - hs.x) : vec2(hs.x - hs.y, 0.0);
+    vec2 vac = ap - cp;
+
+    float d = length(max(vec2(0.0, 0.0), vac));
+    return min(hs.x, hs.y) - d;
+}
+
 const float EDGE_AA = 0.5;
 float edgeweight(float t) {
     return smoothstep(-EDGE_AA, EDGE_AA, t);
@@ -75,8 +85,9 @@ float dToHalfPow(float d, float x) {
 //
 float distanceFromShape(vec2 p, vec2 s, float r) {
     // return distanceFromRect(p, s, r);
-    return distanceFromRoundRect(p, s, r);
+    // return distanceFromRoundRect(p, s, r);
     // return distanceFromTrimedRect(p, s, r);
+    return distanceFromCapsule(p, s, r);
 }
 
 const vec2 MARGIN = vec2(16.0, 140.0);
